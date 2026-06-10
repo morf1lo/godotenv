@@ -6,13 +6,13 @@ import (
 	"strings"
 )
 
-func Load(paths ...string) error {
-	if len(paths) == 0 {
-		paths = append(paths, ".env")
+func Load(filenames ...string) error {
+	if len(filenames) == 0 {
+		filenames = append(filenames, ".env")
 	}
 
-	for _, path := range paths {
-		if err := loadFromFile(path); err != nil {
+	for _, filename := range filenames {
+		if err := loadFromFile(filename); err != nil {
 			return err
 		}
 	}
@@ -20,42 +20,42 @@ func Load(paths ...string) error {
 	return nil
 }
 
-func loadFromFile(path string) error {
-	file, err := os.Open(path)
+func loadFromFile(filename string) error {
+	f, err := os.Open(filename)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer f.Close()
 
-	reader := bufio.NewReader(file)
+	scanner := bufio.NewScanner(f)
 
-	for {
-		pair, err := reader.ReadString('\n')
-		if err != nil {
-			if err.Error() == "EOF" {
-				break
-			}
-			return err
-		}
+	for scanner.Scan() {
+		pair := scanner.Text()
 
 		keyvalue := strings.SplitN(strings.TrimSpace(pair), "=", 2)
 		if len(keyvalue) != 2 {
 			continue
 		}
 
-		key := removeQuotes(strings.TrimSpace(keyvalue[0]))
-		value := removeQuotes(strings.TrimSpace(keyvalue[1]))
+		key := removeQuotes(keyvalue[0])
+		value := removeQuotes(keyvalue[1])
 
 		os.Setenv(key, value)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func removeQuotes(s string) string {
+	s = strings.TrimSpace(s)
+	
 	chars := strings.Split(s, "")
 
-	if len(chars) == 0 {
+	if len(chars) < 2 {
 		return s
 	}
 
