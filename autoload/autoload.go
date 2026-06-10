@@ -1,7 +1,13 @@
 package autoload
 
-import "github.com/morf1lo/godotenv"
+import (
+	"log"
+
+	"github.com/morf1lo/godotenv"
+)
 
 func init() {
-	godotenv.Load()
+	if err := godotenv.Load(); err != nil {
+		log.Fatal(err)
+	}
 }
